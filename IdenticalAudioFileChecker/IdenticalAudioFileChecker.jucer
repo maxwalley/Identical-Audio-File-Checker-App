@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="QHPovZ" name="IdenticalAudioFileChecker" projectType="consoleapp"
+              useAppConfig="0" addUsingNamespaceToJuceHeader="0" displaySplashScreen="1"
+              jucerFormatVersion="1" companyName="MaxWalley" cppLanguageStandard="latest">
+  <MAINGROUP id="kGVgS3" name="IdenticalAudioFileChecker">
+    <GROUP id="{0D2F5E26-C528-7F2A-8C64-58E9D96EBEFB}" name="Source">
+      <FILE id="bTrkgZ" name="MainApplication.h" compile="0" resource="0"
+            file="Source/MainApplication.h"/>
+      <FILE id="eVZIF6" name="MainApplication.cpp" compile="1" resource="0"
+            file="Source/MainApplication.cpp"/>
+      <FILE id="pVyHiM" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="NewProject"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="NewProject"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="../../../C++ Libs and Frameworks/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../C++ Libs and Frameworks/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../C++ Libs and Frameworks/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <OSX/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>
