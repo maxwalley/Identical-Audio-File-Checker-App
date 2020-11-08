@@ -19,10 +19,7 @@ public:
     
     //Must be an iterator to a container holding files
     template<template<class ...> class Container_Type>
-    int addFiles(Container_Type<juce::File>);
-    
-    template<template<class ...> class Container_Type>
-    int addFiles(Container_Type<juce::String>);
+    int addFiles(const Container_Type<juce::File>& filesToAdd);
     
     int addFiles(const juce::StringArray& filePaths);
     
