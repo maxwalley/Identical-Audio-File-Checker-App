@@ -10,21 +10,26 @@
 
 #include "MainApplication.h"
 
-template<class InputIt>
-int FileAdder::addFiles(InputIt first, InputIt last)
+template<template<class ...> class Container_Type>
+int FileAdder::addFiles(Container_Type<juce::File>)
 {
-    for(;first != last; ++first)
-    {
-        juce::File val = *first;
-        
-        //Test files and then add them to the vector here
-    }
     
-    return 0;
+}
+
+template<template<class ...> class Container_Type>
+int FileAdder::addFiles(Container_Type<juce::String>)
+{
+    
+}
+
+int FileAdder::addFiles(const juce::StringArray& filePaths)
+{
+    
 }
 
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
+    
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
     commandManager.addCommand({"--a", "File paths", "A list of the files to scan", "", std::bind(&MainApplication::addFiles, this, std::placeholders::_1)});
@@ -39,5 +44,5 @@ MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 
 void MainApplication::addFiles(const juce::ArgumentList& arguments)
 {
-    
+    //Add files through file adder
 }

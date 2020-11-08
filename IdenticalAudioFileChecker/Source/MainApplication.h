@@ -18,8 +18,13 @@ public:
     ~FileAdder(){};
     
     //Must be an iterator to a container holding files
-    template<class InputIt>
-    int addFiles(InputIt first, InputIt last);
+    template<template<class ...> class Container_Type>
+    int addFiles(Container_Type<juce::File>);
+    
+    template<template<class ...> class Container_Type>
+    int addFiles(Container_Type<juce::String>);
+    
+    int addFiles(const juce::StringArray& filePaths);
     
     void setAcceptedFileTypes(const juce::StringArray& fileTypes) {acceptedFileTypes = fileTypes;};
     
