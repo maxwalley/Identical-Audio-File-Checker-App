@@ -26,6 +26,9 @@ public:
     void setAcceptedFileTypes(const juce::StringArray& fileTypes) {acceptedFileTypes = fileTypes;};
     
 private:
+    //Takes the vector and removes any invalid files and opens any folders
+    void checkFilesAndOpenFolders(std::vector<juce::File>& filesToCheck) const;
+    
     std::vector<juce::File>& files;
     juce::StringArray acceptedFileTypes;
 };

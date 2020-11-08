@@ -49,8 +49,37 @@ int FileAdder::addFiles(const juce::StringArray& filePaths)
     return count;
 }
 
+void FileAdder::checkFilesAndOpenFolders(std::vector<juce::File>& filesToCheck) const
+{
+    for(int i = 0; i < filesToCheck.size(); i++)
+    {
+        juce::File& currentFile = filesToCheck[i];
+        
+        while(!currentFile.exists() || (currentFile.existsAsFile() && !acceptedFileTypes.contains(currentFile.getFileExtension())))
+        {
+            filesToCheck.erase(filesToCheck.begin() + i);
+        }
+        
+        if(currentFile.isDirectory())
+        {
+        if(currentFile.getNumberOfChildFiles(juce::File::findFilesAndDirectories) > 0)
+            {
+                juce::Array<juce::File> res = currentFile.findChildFiles(juce::File::findFilesAndDirectories, true);
+                
+                filesToCheck.insert(filesToCheck.begin() + i + 1, res.begin(), res.end());
+            }
+            
+            filesToCheck.erase(filesToCheck.begin() + i);
+            
+            --i;
+        }
+    }
+    
+}
+
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
+    
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
     commandManager.addCommand({"--a", "File paths", "A list of the files to scan", "", std::bind(&MainApplication::addFiles, this, std::placeholders::_1)});
@@ -65,5 +94,12 @@ MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 
 void MainApplication::addFiles(const juce::ArgumentList& arguments)
 {
-    //Add files through file adder
+    juce::StringArray filesToAdd;
+    
+    for(int i = 1; i < arguments.size(); i++)
+    {
+        filesToAdd.add(arguments[i].text);
+    }
+    
+    fileAdder.addFiles(filesToAdd);
 }
