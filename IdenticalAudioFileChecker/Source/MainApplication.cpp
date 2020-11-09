@@ -13,72 +13,49 @@
 template<template<class ...> class Container_Type>
 int FileAdder::addFiles(const Container_Type<juce::File>& filesToAdd)
 {
-    int count = 0;
+    int oldSize = files.size();
     
     for (const juce::File& file : filesToAdd)
     {
-        if(!acceptedFileTypes.contains(file.getFileExtension()))
-        {
-            continue;
-        }
-        
-        files.push_back(file);
-        ++count;
+        addFile(file);
     }
-    
-    return count;
+    return files.size() - oldSize;
 }
 
 int FileAdder::addFiles(const juce::StringArray& filePaths)
 {
-    int count = 0;
+    std::vector<juce::File> files;
+    files.resize(filePaths.size());
     
-    for (const juce::String& str : filePaths)
+    
+    std::transform(filePaths.begin(), filePaths.end(), files.begin(), [](const juce::String& path)
     {
-        int lastStop = str.lastIndexOf(".");
-        
-        if(!acceptedFileTypes.contains(str.substring(lastStop)))
-        {
-            continue;
-        }
-        
-        files.push_back(juce::File(str));
-        ++count;
-    }
-    
-    return count;
+        return juce::File(path);
+    });
+    return addFiles(files);
 }
 
-void FileAdder::checkFilesAndOpenFolders(std::vector<juce::File>& filesToCheck) const
+void FileAdder::addFile(const juce::File& file)
 {
-    for(int i = 0; i < filesToCheck.size(); i++)
+    if(file.existsAsFile() && acceptedFileTypes.contains(file.getFileExtension()))
     {
-        juce::File& currentFile = filesToCheck[i];
-        
-        while(!currentFile.exists() || (currentFile.existsAsFile() && !acceptedFileTypes.contains(currentFile.getFileExtension())))
-        {
-            filesToCheck.erase(filesToCheck.begin() + i);
-        }
-        
-        if(currentFile.isDirectory())
-        {
-        if(currentFile.getNumberOfChildFiles(juce::File::findFilesAndDirectories) > 0)
-            {
-                juce::Array<juce::File> res = currentFile.findChildFiles(juce::File::findFilesAndDirectories, true);
-                
-                filesToCheck.insert(filesToCheck.begin() + i + 1, res.begin(), res.end());
-            }
-            
-            filesToCheck.erase(filesToCheck.begin() + i);
-            
-            --i;
-        }
+        files.push_back(file);
     }
     
+    else if(file.isDirectory())
+    {
+        juce::Array<juce::File> children = file.findChildFiles(2, true);
+        
+        for (const juce::File& child : children)
+        {
+            addFile(child);
+        }
+    }
 }
 
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
+    fileAdder.setAcceptedFileTypes(juce::StringArray(".mp3"));
     
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
@@ -95,11 +72,12 @@ MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 void MainApplication::addFiles(const juce::ArgumentList& arguments)
 {
     juce::StringArray filesToAdd;
+    filesToAdd.strings.resize(arguments.size() - 1);
     
-    for(int i = 1; i < arguments.size(); i++)
+    std::transform(arguments.arguments.begin() + 1, arguments.arguments.end(), filesToAdd.begin(), [](const juce::ArgumentList::Argument& arg)
     {
-        filesToAdd.add(arguments[i].text);
-    }
+        return arg.text;
+    });
     
     fileAdder.addFiles(filesToAdd);
 }
