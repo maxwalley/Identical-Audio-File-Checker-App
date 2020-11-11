@@ -102,8 +102,6 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
             {
                 if(firstBufferRead[i] != secondBufferRead[i])
                 {
-                    std::cout << firstBufferRead[i] << " and " << secondBufferRead[i] << "\n";
-                    
                     return juce::Result::fail("Different samples at " + juce::String(i + currentSamplePosition) + " on channel " + juce::String(chan));
                 }
             }
@@ -125,10 +123,6 @@ MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
     commandManager.addCommand({"--a", "File paths", "A list of the files to scan", "", std::bind(&MainApplication::addFiles, this, std::placeholders::_1)});
     
     commandManager.findAndRunCommand(argc, argv);
-    
-    fileAdder.addFile(juce::File("/Users/maxwalley/Desktop/King Gizzard & The Lizard Wizard - Chunky Shrapnel/02.The River copy.mp3"));
-    fileAdder.addFile(juce::File("/Users/maxwalley/Desktop/King Gizzard & The Lizard Wizard - Chunky Shrapnel/02.The River.mp3"));
-    
     
     if(!files.empty())
     {
