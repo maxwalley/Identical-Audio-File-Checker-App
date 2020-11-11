@@ -32,6 +32,21 @@ private:
     juce::StringArray acceptedFileTypes;
 };
 
+class AudioFormatReaderComparator
+{
+public:
+    AudioFormatReaderComparator();
+    ~AudioFormatReaderComparator(){};
+    
+    juce::Result compareReaders(juce::AudioFormatReader* first, juce::AudioFormatReader* second);
+    
+private:
+    int bufferSize = 44100;
+    
+    juce::AudioBuffer<float> firstBuffer;
+    juce::AudioBuffer<float> secondBuffer;
+};
+
 class MainApplication
 {
 public:
@@ -41,7 +56,16 @@ public:
 private:
     void addFiles(const juce::ArgumentList& arguments);
     
+    int scanFiles();
+    
     juce::ConsoleApplication commandManager;
     std::vector<juce::File> files;
     FileAdder fileAdder;
+    
+    juce::AudioFormatManager fmtMan;
+    
+    std::unique_ptr<juce::AudioFormatReader> compFileReader1 = nullptr;
+    std::unique_ptr<juce::AudioFormatReader> compFileReader2 = nullptr;
+    
+    AudioFormatReaderComparator comparator;
 };

@@ -53,9 +53,68 @@ void FileAdder::addFile(const juce::File& file)
     }
 }
 
+AudioFormatReaderComparator::AudioFormatReaderComparator()  : firstBuffer(2, bufferSize), secondBuffer(2, bufferSize)
+{
+    
+}
+
+juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader* first, juce::AudioFormatReader* second)
+{
+    if(first->sampleRate != second->sampleRate)
+    {
+        return juce::Result::fail("Incompatible Sample Rates");
+    }
+    
+    else if(first->bitsPerSample != second->bitsPerSample)
+    {
+        return juce::Result::fail("Incompatible Bit Depths");
+    }
+    
+    if(first->numChannels != second->numChannels)
+    {
+        return juce::Result::fail("Incompatible Num Channels");
+    }
+    
+    if(first->numChannels != firstBuffer.getNumChannels())
+    {
+        firstBuffer.setSize(first->numChannels, bufferSize);
+        secondBuffer.setSize(first->numChannels, bufferSize);
+    }
+    
+    int currentSamplePosition = 0;
+    
+    while(currentSamplePosition < first->lengthInSamples)
+    {
+        first->read(&firstBuffer, 0, bufferSize, currentSamplePosition, true, true);
+        
+        second->read(&secondBuffer, 0, bufferSize, currentSamplePosition, true, true);
+        
+        for(int chan = 0; chan < first->numChannels; chan++)
+        {
+            const float* firstBufferRead = firstBuffer.getReadPointer(chan, 0);
+            const float* secondBufferRead = secondBuffer.getReadPointer(chan, 0);
+            
+            for(int i = 0; i < first->lengthInSamples; i++)
+            {
+                if(firstBufferRead[i] != secondBufferRead[i])
+                {
+                    std::cout << firstBufferRead[i] << " and " << secondBufferRead[i] << "\n";
+                    
+                    return juce::Result::fail("Different samples at " + juce::String(i + currentSamplePosition) + " on channel " + juce::String(chan));
+                }
+            }
+        }
+        
+        currentSamplePosition += bufferSize;
+    }
+    
+    return juce::Result::ok();
+}
+
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
     fileAdder.setAcceptedFileTypes(juce::StringArray(".mp3"));
+    fmtMan.registerBasicFormats();
     
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
@@ -63,9 +122,14 @@ MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
     
     commandManager.findAndRunCommand(argc, argv);
     
+    fileAdder.addFile(juce::File("/Users/maxwalley/Desktop/King Gizzard & The Lizard Wizard - Chunky Shrapnel/02.The River copy.mp3"));
+    fileAdder.addFile(juce::File("/Users/maxwalley/Desktop/King Gizzard & The Lizard Wizard - Chunky Shrapnel/02.The River.mp3"));
+    
+    
     if(!files.empty())
     {
-        //Scan
+        int numDuplicates = scanFiles();
+        std::cout << numDuplicates << " duplicates found\n";
     }
 }
 
@@ -80,4 +144,50 @@ void MainApplication::addFiles(const juce::ArgumentList& arguments)
     });
     
     fileAdder.addFiles(filesToAdd);
+}
+
+int MainApplication::scanFiles()
+{
+    int numDuplicates = 0;
+    int currentIndex = 0;
+    
+    for (const juce::File& currentFile : files)
+    {
+        compFileReader1.reset(fmtMan.createReaderFor(currentFile));
+        
+        if(compFileReader1 == nullptr)
+        {
+            std::cout << "Warning file could not be read: " << currentFile.getFullPathName() << "\n";
+            continue;
+        }
+        
+        for(int i = ++currentIndex; i < files.size(); i++)
+        {
+            compFileReader2.reset(fmtMan.createReaderFor(files[i]));
+            
+            if(compFileReader2 == nullptr)
+            {
+                std::cout << "Warning file could not be read: " << files[i].getFullPathName() << "\n";
+                
+                //removing the unreadable file stops the it being attempted to be read again
+                files.erase(files.begin() + i);
+                continue;
+            }
+            
+            juce::Result res = comparator.compareReaders(compFileReader1.get(), compFileReader2.get());
+            
+            if(res)
+            {
+                std::cout << currentFile.getFullPathName() << " is the same as " << files[i].getFullPathName() << "\n";
+                
+                ++numDuplicates;
+            }
+            else
+            {
+                std::cout << res.getErrorMessage() << std::endl;
+            }
+        }
+    }
+    
+    return numDuplicates;
 }
