@@ -55,7 +55,8 @@ void FileAdder::addFile(const juce::File& file)
 
 AudioFormatReaderComparator::AudioFormatReaderComparator()  : firstBuffer(2, bufferSize), secondBuffer(2, bufferSize)
 {
-    
+    firstBuffer.clear();
+    secondBuffer.clear();
 }
 
 juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader* first, juce::AudioFormatReader* second)
@@ -85,6 +86,9 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
     
     while(currentSamplePosition < first->lengthInSamples)
     {
+        firstBuffer.clear();
+        secondBuffer.clear();
+        
         first->read(&firstBuffer, 0, bufferSize, currentSamplePosition, true, true);
         
         second->read(&secondBuffer, 0, bufferSize, currentSamplePosition, true, true);
@@ -94,7 +98,7 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
             const float* firstBufferRead = firstBuffer.getReadPointer(chan, 0);
             const float* secondBufferRead = secondBuffer.getReadPointer(chan, 0);
             
-            for(int i = 0; i < first->lengthInSamples; i++)
+            for(int i = 0; i < bufferSize; i++)
             {
                 if(firstBufferRead[i] != secondBufferRead[i])
                 {
