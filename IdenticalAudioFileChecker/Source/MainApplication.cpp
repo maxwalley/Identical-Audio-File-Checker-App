@@ -61,12 +61,13 @@ AudioFormatReaderComparator::AudioFormatReaderComparator()  : firstBuffer(2, buf
 
 juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader* first, juce::AudioFormatReader* second)
 {
-    if(first->sampleRate != second->sampleRate)
+    //Makes sure the one with the higher sample rate is first
+    if(first->sampleRate < second->sampleRate)
     {
-        return juce::Result::fail("Incompatible Sample Rates");
+        std::swap(first, second);
     }
     
-    else if(first->bitsPerSample != second->bitsPerSample)
+    if(first->bitsPerSample != second->bitsPerSample)
     {
         return juce::Result::fail("Incompatible Bit Depths");
     }
@@ -76,38 +77,67 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
         return juce::Result::fail("Incompatible Num Channels");
     }
     
-    if(first->numChannels != firstBuffer.getNumChannels())
+    //Work out the difference in sample rates - Turn this into seperate class
+    int sampleDistanceOnFirst = 1;
+    int sampleDistanceOnSecond = 1;
+    
+    if(first->sampleRate > second->sampleRate)
     {
-        firstBuffer.setSize(first->numChannels, bufferSize);
-        secondBuffer.setSize(first->numChannels, bufferSize);
+        //Higher and lower means the sample rate
+        double firstLenOfSample = 1000.0 / first->sampleRate;
+        double secondLenOfSample = 1000.0 / second->sampleRate;
+        
+        double curSample = firstLenOfSample;
+        int i = 1;
+        
+        //Check if this length is divisible by the length of the lower sample
+        while(fmod(curSample, secondLenOfSample) > 0.0000001)
+        {
+            //Move it on a sample
+            curSample += firstLenOfSample;
+            ++i;
+        }
+        
+        sampleDistanceOnFirst = i;
+        sampleDistanceOnSecond = floor(curSample / secondLenOfSample);
     }
     
-    int currentSamplePosition = 0;
+    firstBuffer.setSize(first->numChannels, first->sampleRate * bufferSizeMultiplier);
+    secondBuffer.setSize(second->numChannels, second->sampleRate * bufferSizeMultiplier);
     
-    while(currentSamplePosition < first->lengthInSamples)
+    //Keeps track of where the buffer is in the stream
+    int firstBufferStartPos = 0;
+    int secondBufferStartPos = 0;
+    
+    //while positions are less than the length of the readers
+    while(firstBufferStartPos < first->lengthInSamples)
     {
         firstBuffer.clear();
         secondBuffer.clear();
         
-        first->read(&firstBuffer, 0, bufferSize, currentSamplePosition, true, true);
+        first->read(&firstBuffer, 0, firstBuffer.getNumSamples(), firstBufferStartPos, true, true);
+        second->read(&secondBuffer, 0, secondBuffer.getNumSamples(), secondBufferStartPos, true, true);
         
-        second->read(&secondBuffer, 0, bufferSize, currentSamplePosition, true, true);
-        
-        for(int chan = 0; chan < first->numChannels; chan++)
+        for(int channel = 0; channel < firstBuffer.getNumChannels(); channel++)
         {
-            const float* firstBufferRead = firstBuffer.getReadPointer(chan, 0);
-            const float* secondBufferRead = secondBuffer.getReadPointer(chan, 0);
+            const float* firstBufferReadPtr = firstBuffer.getReadPointer(channel);
+            const float* secondBufferReadPtr = secondBuffer.getReadPointer(channel);
             
-            for(int i = 0; i < bufferSize; i++)
+            int firstBufferReadPos = 0;
+            int secondBufferReadPos = 0;
+            
+            while(firstBufferReadPos < firstBuffer.getNumSamples() && secondBufferReadPos < secondBuffer.getNumSamples())
             {
-                if(firstBufferRead[i] != secondBufferRead[i])
+                if(std::abs(firstBufferReadPtr[firstBufferReadPos] - secondBufferReadPtr[secondBufferReadPos]) > tolerance)
                 {
-                    return juce::Result::fail("Different samples at " + juce::String(i + currentSamplePosition) + " on channel " + juce::String(chan));
+                    return juce::Result::fail("Different samples found");
                 }
+                firstBufferReadPos += sampleDistanceOnFirst;
+                secondBufferReadPos += sampleDistanceOnSecond;
             }
         }
-        
-        currentSamplePosition += bufferSize;
+        firstBufferStartPos += firstBuffer.getNumSamples();
+        secondBufferStartPos += secondBuffer.getNumSamples();
     }
     
     return juce::Result::ok();
@@ -115,9 +145,9 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
 
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
-    fileAdder.setAcceptedFileTypes(juce::StringArray(".mp3"));
+    fileAdder.setAcceptedFileTypes(juce::StringArray({".mp3", ".wav"}));
     fmtMan.registerBasicFormats();
-    
+
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
     commandManager.addCommand({"--a", "File paths", "A list of the files to scan", "", std::bind(&MainApplication::addFiles, this, std::placeholders::_1)});
