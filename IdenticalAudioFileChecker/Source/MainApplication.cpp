@@ -61,6 +61,8 @@ AudioFormatReaderComparator::AudioFormatReaderComparator()  : firstBuffer(2, buf
 
 juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader* first, juce::AudioFormatReader* second)
 {
+    int numChannelsToCmp = first->numChannels;
+    
     //Makes sure the one with the higher sample rate is first
     if(first->sampleRate < second->sampleRate)
     {
@@ -74,7 +76,7 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
     
     if(first->numChannels != second->numChannels)
     {
-        return juce::Result::fail("Incompatible Num Channels");
+        numChannelsToCmp = std::min({first->numChannels, second->numChannels});
     }
     
     //Work out the difference in sample rates - Turn this into seperate class
@@ -118,7 +120,7 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
         first->read(&firstBuffer, 0, firstBuffer.getNumSamples(), firstBufferStartPos, true, true);
         second->read(&secondBuffer, 0, secondBuffer.getNumSamples(), secondBufferStartPos, true, true);
         
-        for(int channel = 0; channel < firstBuffer.getNumChannels(); channel++)
+        for(int channel = 0; channel < numChannelsToCmp; channel++)
         {
             const float* firstBufferReadPtr = firstBuffer.getReadPointer(channel);
             const float* secondBufferReadPtr = secondBuffer.getReadPointer(channel);
