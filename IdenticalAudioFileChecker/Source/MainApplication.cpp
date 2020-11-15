@@ -76,7 +76,14 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
     
     if(first->numChannels != second->numChannels)
     {
-        numChannelsToCmp = std::min({first->numChannels, second->numChannels});
+        if(acceptDifferentNumChannels)
+        {
+            numChannelsToCmp = std::min({first->numChannels, second->numChannels});
+        }
+        else
+        {
+            return juce::Result::fail("Different Number of Channels Detected");
+        }
     }
     
     //Work out the difference in sample rates - Turn this into seperate class
