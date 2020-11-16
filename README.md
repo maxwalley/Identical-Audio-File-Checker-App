@@ -1,18 +1,18 @@
 # Identical-Audio-File-Checker-App
 A simple command line app which checks if audio files are identical
 
-BASIC IDEA:
+This takes a list of audio files and runs through them checking if any are identical to any other.
 
-This app will use the JUCE framework.
+Commands:
+--a file paths...
 
-COMMANDS:
--a file - to add files and folders for files and folders
+These files can have differing sample rates and differing numbers of channels.
 
-ADDING FILES:
-Files can be added individually or together. If a folder is added it will unpack it and extract out all the audio files.
+Accepted Formats:
+WAV
+WMA
+MP3
+FLAC
+OGG
+AIFF
 
-DATA:
-List of current files will be held in an std::vector<File>
-
-EXTENTIONS:
-Optional comman -r removes the any copies of a file after it has found one copy

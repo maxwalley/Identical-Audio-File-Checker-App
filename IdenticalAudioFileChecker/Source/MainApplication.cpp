@@ -53,7 +53,7 @@ void FileAdder::addFile(const juce::File& file)
     }
 }
 
-AudioFormatReaderComparator::AudioFormatReaderComparator()  : firstBuffer(2, bufferSize), secondBuffer(2, bufferSize)
+AudioFormatReaderComparator::AudioFormatReaderComparator()
 {
     firstBuffer.clear();
     secondBuffer.clear();
@@ -154,8 +154,16 @@ juce::Result AudioFormatReaderComparator::compareReaders(juce::AudioFormatReader
 
 MainApplication::MainApplication(int argc, char* argv[])  : fileAdder(files)
 {
-    fileAdder.setAcceptedFileTypes(juce::StringArray({".mp3", ".wav"}));
     fmtMan.registerBasicFormats();
+    
+    juce::StringArray acceptedFileTypes;
+    
+    for (juce::AudioFormat* fmt : fmtMan)
+    {
+        acceptedFileTypes.addArray(fmt->getFileExtensions());
+    }
+    
+    fileAdder.setAcceptedFileTypes(acceptedFileTypes);
 
     commandManager.addHelpCommand("--help|-help", "The Identical Audio File Checker scans a list of audio files and finds if any are identical.", true);
     
